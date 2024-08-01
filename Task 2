@@ -1,0 +1,280 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Advanced Fitness Tracker',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        textTheme: TextTheme(
+          displayLarge: TextStyle(
+              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          displayMedium: TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white70),
+          bodyLarge: TextStyle(fontSize: 16, color: Colors.white70),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.1),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          labelStyle:
+              TextStyle(color: Color(0xffd0c6c6)), // Make label text white
+        ),
+        buttonTheme: ButtonThemeData(
+          buttonColor: Colors.orange,
+          textTheme: ButtonTextTheme.primary,
+        ),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<String> nutritionInfo = [];
+  List<String> workoutLog = [];
+  List<bool> workoutCompletion = [];
+  int calories = 0;
+  int goalCalories = 2000;
+
+  final TextEditingController _goalCaloriesController = TextEditingController();
+  final TextEditingController _foodSearchController = TextEditingController();
+  final TextEditingController _userGoalController = TextEditingController();
+  final TextEditingController _workoutController = TextEditingController();
+
+  String userGoal = '';
+  String dietRecommendation = '';
+  String workoutRecommendation = '';
+
+  void _setGoalCalories() {
+    setState(() {
+      goalCalories = int.tryParse(_goalCaloriesController.text) ?? 2000;
+      _goalCaloriesController.clear();
+    });
+  }
+
+  void _addMeal(
+      String meal, int mealCalories, double protein, double carbs, double fat) {
+    setState(() {
+      nutritionInfo.add(
+          '$meal: $mealCalories kcal, Protein: ${protein}g, Carbs: ${carbs}g, Fat: ${fat}g');
+      calories += mealCalories;
+    });
+  }
+
+  Future<void> _searchFood() async {
+    String query = _foodSearchController.text;
+    if (query.isEmpty) return;
+
+    // Mock API response: Replace with real API call for actual data
+    int mockCalories = (query.length * 10) + 50;
+    double mockProtein = (query.length * 0.5) + 5;
+    double mockCarbs = (query.length * 1.5) + 10;
+    double mockFat = (query.length * 0.2) + 2;
+
+    _addMeal(query, mockCalories, mockProtein, mockCarbs, mockFat);
+    _foodSearchController.clear();
+  }
+
+  void _updateRecommendations() {
+    setState(() {
+      userGoal = _userGoalController.text;
+      if (userGoal.toLowerCase().contains('weight loss')) {
+        dietRecommendation = 'Low-carb, high-protein diet.';
+        workoutRecommendation =
+            'Cardio and strength training 4-5 times a week.';
+      } else if (userGoal.toLowerCase().contains('muscle gain')) {
+        dietRecommendation = 'High-protein, moderate carb diet.';
+        workoutRecommendation =
+            'Strength training 5-6 times a week with protein supplements.';
+      } else {
+        dietRecommendation = 'Balanced diet with a mix of all nutrients.';
+        workoutRecommendation =
+            'Regular exercise, including cardio and strength training 3-4 times a week.';
+      }
+    });
+  }
+
+  void _addWorkout() {
+    setState(() {
+      String workout = _workoutController.text;
+      if (workout.isNotEmpty) {
+        workoutLog.add(workout);
+        workoutCompletion.add(false);
+        _workoutController.clear();
+      }
+    });
+  }
+
+  void _toggleCompletion(int index) {
+    setState(() {
+      workoutCompletion[index] = !workoutCompletion[index];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double calorieProgress = (calories / goalCalories).clamp(0, 1);
+    int caloriePercentage = (calorieProgress * 100).round();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Advanced Fitness Tracker'),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blueGrey[900]!, Colors.blueGrey[600]!],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Set Daily Calorie Goal:',
+                  style: Theme.of(context).textTheme.displayMedium),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _goalCaloriesController,
+                      decoration: InputDecoration(labelText: 'Calorie Goal'),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _setGoalCalories,
+                    child: Text('Set Goal'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              Text('Calories Consumed: $calories / $goalCalories',
+                  style: Theme.of(context).textTheme.displayMedium),
+              Text('Nutrition Information:',
+                  style: Theme.of(context).textTheme.displayMedium),
+              ...nutritionInfo
+                  .map((meal) =>
+                      Text(meal, style: Theme.of(context).textTheme.bodyLarge))
+                  .toList(),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _foodSearchController,
+                      decoration:
+                          InputDecoration(labelText: 'Search Food Item'),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _searchFood,
+                    child: Text('Add'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              Text('Set Fitness Goal:',
+                  style: Theme.of(context).textTheme.displayMedium),
+              TextField(
+                controller: _userGoalController,
+                decoration: InputDecoration(labelText: 'Fitness Goal'),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _updateRecommendations,
+                child: Text('Update Recommendations'),
+              ),
+              SizedBox(height: 20),
+              if (userGoal.isNotEmpty) ...[
+                Text('Based on your goal of "$userGoal", we recommend:',
+                    style: Theme.of(context).textTheme.displayMedium),
+                SizedBox(height: 10),
+                Text('Diet Recommendation: $dietRecommendation',
+                    style: Theme.of(context).textTheme.bodyLarge),
+                SizedBox(height: 5),
+                Text('Workout Recommendation: $workoutRecommendation',
+                    style: Theme.of(context).textTheme.bodyLarge),
+              ],
+              SizedBox(height: 20),
+              LinearProgressIndicator(
+                value: calorieProgress,
+                minHeight: 10,
+                color: Colors.orange,
+                backgroundColor: Colors.grey[800],
+              ),
+              SizedBox(height: 10),
+              Text('$caloriePercentage%',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange)),
+              SizedBox(height: 20),
+              Text('Log Workout:',
+                  style: Theme.of(context).textTheme.displayMedium),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _workoutController,
+                      decoration: InputDecoration(labelText: 'Workout'),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _addWorkout,
+                    child: Text('Add Workout'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              Text('Workout Log:',
+                  style: Theme.of(context).textTheme.displayMedium),
+              ...List.generate(workoutLog.length, (index) {
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8.0),
+                  color: Colors.grey[850],
+                  child: ListTile(
+                    title: Text(workoutLog[index],
+                        style: Theme.of(context).textTheme.bodyLarge),
+                    trailing: Checkbox(
+                      value: workoutCompletion[index],
+                      onChanged: (bool? value) {
+                        _toggleCompletion(index);
+                      },
+                      activeColor: Colors.orange,
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
